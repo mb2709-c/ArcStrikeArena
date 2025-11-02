@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import { FHE, euint64, externalEuint64 } from "@fhevm/solidity/lib/FHE.sol";
+import { EthereumConfig } from "@fhevm/solidity/config/ZamaConfig.sol";
+
 /**
- * @title Arc Strike Arena (simplified)
- * @notice Minimal duel contract aligned with the current frontend – stores encrypted handles without fhEVM ops.
+ * @title Arc Strike Arena - Encrypted PvP betting
+ * @notice Stores encrypted fan weights using fhEVM primitives and exposes aggregated duel stats.
  */
-contract ArcStrikeArena {
+contract ArcStrikeArena is EthereumConfig {
     struct Duel {
         string duelId;
         string fighterA;
@@ -16,6 +19,8 @@ contract ArcStrikeArena {
         bool cancelled;
         bool settled;
         uint8 winningSide; // 0 draw, 1 fighterA, 2 fighterB
+        euint64 weightA;
+        euint64 weightB;
         uint256 supportersA;
         uint256 supportersB;
     }
@@ -24,8 +29,7 @@ contract ArcStrikeArena {
         uint8 side;
         bool claimed;
         bool exists;
-        bytes32 weightCipher;
-        bytes proof;
+        euint64 weightCipher;
     }
 
     uint256 public constant MIN_STAKE = 0.01 ether;
@@ -37,7 +41,7 @@ contract ArcStrikeArena {
     string[] private duelIds;
 
     event DuelCreated(string indexed duelId, uint256 stakeAmount, uint256 deadline);
-    event BetPlaced(string indexed duelId, address indexed bettor, uint8 side, bytes32 handle);
+    event BetPlaced(string indexed duelId, address indexed supporter, uint8 side);
     event DuelSettled(string indexed duelId, uint8 winningSide);
     event DuelCancelled(string indexed duelId);
     event PrizeClaimed(string indexed duelId, address indexed winner, uint256 amount);
@@ -85,7 +89,7 @@ contract ArcStrikeArena {
     function placeReplicaBet(
         string memory duelId,
         uint8 side,
-        bytes32 encryptedSkill,
+        externalEuint64 encryptedSkill,
         bytes calldata inputProof
     ) external payable {
         Duel storage duel = duels[duelId];
@@ -98,20 +102,28 @@ contract ArcStrikeArena {
         Bet storage bet = bets[duelId][msg.sender];
         if (bet.exists) revert AlreadyBet();
 
-        bet.side = side;
-        bet.claimed = false;
-        bet.exists = true;
-        bet.weightCipher = encryptedSkill;
-        bet.proof = inputProof;
+        euint64 skill = FHE.fromExternal(encryptedSkill, inputProof);
 
-        duel.prizePool += msg.value;
         if (side == 1) {
+            duel.weightA = duel.supportersA == 0 ? skill : FHE.add(duel.weightA, skill);
+            FHE.allowThis(duel.weightA);
             duel.supportersA += 1;
         } else {
+            duel.weightB = duel.supportersB == 0 ? skill : FHE.add(duel.weightB, skill);
+            FHE.allowThis(duel.weightB);
             duel.supportersB += 1;
         }
 
-        emit BetPlaced(duelId, msg.sender, side, encryptedSkill);
+        bet.side = side;
+        bet.claimed = false;
+        bet.exists = true;
+        bet.weightCipher = skill;
+
+        FHE.allow(bet.weightCipher, msg.sender);
+        FHE.allowThis(bet.weightCipher);
+
+        duel.prizePool += msg.value;
+        emit BetPlaced(duelId, msg.sender, side);
     }
 
     /** -------------------- Settlement -------------------- */
@@ -220,16 +232,19 @@ contract ArcStrikeArena {
         );
     }
 
-    function getReplicaBetCipher(string memory duelId, address user) external view returns (bytes32) {
+    function getReplicaBetCipher(string memory duelId, address user) external view returns (euint64) {
         Bet storage bet = bets[duelId][user];
         require(bet.exists, "Bet not found");
         return bet.weightCipher;
     }
 
-    function getReplicaBetProof(string memory duelId, address user) external view returns (bytes memory) {
+    function getUserBetInfo(string memory duelId, address user) external view returns (
+        bool exists,
+        uint8 side,
+        bool claimed
+    ) {
         Bet storage bet = bets[duelId][user];
-        require(bet.exists, "Bet not found");
-        return bet.proof;
+        return (bet.exists, bet.side, bet.claimed);
     }
 
     receive() external payable {}
