@@ -1,0 +1,25 @@
+{
+  "name": "arc-strike-arena",
+  "version": "1.0.0",
+  "description": "Privacy-preserving PvP betting platform with Fully Homomorphic Encryption",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "deploy:sepolia": "SEPOLIA_RPC_URL=\"https://ethereum-sepolia-rpc.publicnode.com\" npx hardhat run scripts/deploy.cjs --network sepolia",
+    "create-duels": "npx hardhat run scripts/create-duels.cjs --network sepolia",
+    "verify": "npx hardhat verify --network sepolia",
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0",
+    "ethers": "^6.13.0"
+  },
+  "devDependencies": {
+    "@fhevm/hardhat-plugin": "0.3.0-0",
+    "@fhevm/mock-utils": "0.3.0-0",
+    "@fhevm/solidity": "^0.9.0",
+    "@nomicfoundation/hardhat-ethers": "^3.0.0",
+    "@types/node": "^22.0.0",
+    "hardhat": "^2.26.3"
+  }
+}
