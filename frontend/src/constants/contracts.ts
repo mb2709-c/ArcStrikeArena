@@ -1,7 +1,7 @@
 import type { Address } from "viem";
 
 export const ARC_STRIKE_ARENA_ADDRESS: Address =
-  "0x203Fa83a518D49Ab82523b96eE0da5240647E223";
+  "0x0c6bf68f0CC59F0FBb93b7F51fA8caC756e04ABD";
 
 export const ARC_STRIKE_ARENA_ABI = [
   // ========== WRITE FUNCTIONS ==========
