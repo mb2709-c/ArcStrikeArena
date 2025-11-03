@@ -7,7 +7,7 @@ async function main() {
   const provider = new ethers.JsonRpcProvider(process.env.SEPOLIA_RPC_URL);
   const wallet = new ethers.Wallet(process.env.PRIVATE_KEY, provider);
   const abi = [{type:'function',name:'createReplicaDuel',inputs:[{name:'duelId',type:'string'},{name:'fighterA',type:'string'},{name:'fighterB',type:'string'},{name:'stakeAmount',type:'uint256'},{name:'duration',type:'uint256'}],outputs:[]}];
-  const contract = new ethers.Contract('0x203Fa83a518D49Ab82523b96eE0da5240647E223', abi, wallet);
+  const contract = new ethers.Contract('0x0c6bf68f0CC59F0FBb93b7F51fA8caC756e04ABD', abi, wallet);
   
   const duels = [
     ['ARC-511','Shadow Blade','Lightning Fist','0.01',3888000],
