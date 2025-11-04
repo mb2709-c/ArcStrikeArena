@@ -3,14 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin" />
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp" />
     <title>Arc Strike Arena Console</title>
-    <script src="https://cdn.zama.ai/relayer-sdk-js/0.2.0/relayer-sdk-js.umd.cjs"></script>
+    <link rel="preconnect" href="https://cdn.zama.org" />
   </head>
   <body class="bg-background font-body text-foreground antialiased">
     <div id="root"></div>
+    <script
+      src="https://cdn.zama.org/relayer-sdk-js/0.3.0-5/relayer-sdk-js.umd.cjs"
+      type="text/javascript"
+      crossorigin="anonymous"
+      defer
+    ></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-
-
 

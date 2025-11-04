@@ -1,47 +1,81 @@
-import { getAddress, hexlify } from 'ethers';
+import { getAddress, hexlify } from "ethers";
+import { useFheStore } from "@/store/useFheStore";
 
 let fheInstance: any = null;
+let sdkPromise: Promise<any> | null = null;
 
 export type EncryptedSkillPayload = {
   handle: `0x${string}`;
   proof: `0x${string}`;
 };
 
-export const initializeFHE = async (): Promise<any> => {
+/**
+ * Get SDK from window (loaded via static script tag in HTML)
+ * SDK 0.3.0-5 is loaded via static script tag in index.html
+ */
+const getSDK = (): any => {
+  if (typeof window === "undefined") {
+    throw new Error("FHE SDK requires browser environment");
+  }
+
+  // Check for both uppercase and lowercase versions
+  const sdk = (window as any).RelayerSDK || (window as any).relayerSDK;
+
+  if (!sdk) {
+    throw new Error('RelayerSDK not loaded. Please ensure the script tag is in your HTML.');
+  }
+
+  return sdk;
+};
+
+export const initializeFHE = async (provider?: any): Promise<any> => {
+  const { setReady, setInitializing, setError } = useFheStore.getState();
+
   if (fheInstance) {
+    setReady(true);
+    setInitializing(false);
     return fheInstance;
   }
 
-  if (typeof window === 'undefined') {
-    throw new Error('Window object not available');
+  if (typeof window === "undefined") {
+    throw new Error("FHE SDK requires browser environment");
   }
 
-  const provider = (window as any).ethereum;
+  // Get Ethereum provider from multiple sources
+  const ethereumProvider = provider ||
+    (window as any).ethereum ||
+    (window as any).okxwallet?.provider ||
+    (window as any).okxwallet;
 
-  if (!provider) {
-    throw new Error('Ethereum provider not found. Please install MetaMask or connect your wallet.');
+  if (!ethereumProvider) {
+    throw new Error("Ethereum provider not found. Please connect your wallet first.");
   }
+
+  setInitializing(true);
+  setError(undefined);
+  console.log("🔌 Initializing FHE SDK...");
+
+  const sdk = getSDK();
+  const { initSDK, createInstance, SepoliaConfig } = sdk;
+
+  console.log("📦 SDK found, calling initSDK()...");
+  await initSDK();
+  console.log("✅ SDK initialized");
+
+  const config = { ...SepoliaConfig, network: ethereumProvider };
 
   try {
-    console.log('[FHE] Loading SDK...');
-    const { createInstance, initSDK, SepoliaConfig } = await import('@zama-fhe/relayer-sdk/bundle');
-
-    console.log('[FHE] Initializing WASM...');
-    await initSDK();
-
-    console.log('[FHE] Creating instance with network provider...');
-    fheInstance = await createInstance({
-      ...SepoliaConfig,
-      network: provider,
-      gatewayUrl: 'https://gateway.zama.ai'
-    });
-
-    console.log('[FHE] ✅ Initialized successfully');
+    fheInstance = await createInstance(config);
+    console.log("✅ FHE instance initialized for Sepolia");
+    setReady(true);
+    setInitializing(false);
     return fheInstance;
   } catch (error) {
-    const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error('[FHE] ❌ Initialization failed:', errorMsg);
-    throw new Error(`FHE initialization failed: ${errorMsg}`);
+    console.error("❌ createInstance failed:", error);
+    setReady(false);
+    setInitializing(false);
+    setError(error instanceof Error ? error.message : String(error));
+    throw error;
   }
 };
 
@@ -55,36 +89,21 @@ export const encryptSkill = async (
   userAddress: string
 ): Promise<EncryptedSkillPayload> => {
   if (!fheInstance) {
-    throw new Error('FHE SDK not initialized. Call initializeFHE first.');
+    throw new Error("FHE SDK not initialized. Call initializeFHE first.");
   }
 
   if (skill <= 0n || skill > 100n) {
-    throw new Error('Skill must be between 1 and 100');
+    throw new Error("Skill must be between 1 and 100");
   }
 
   try {
-    console.log(`[FHE] Encrypting skill ${skill} for contract ${contractAddress}`);
-    console.log(`[FHE] Contract: ${contractAddress}, User: ${userAddress}`);
-
     const input = fheInstance.createEncryptedInput(getAddress(contractAddress), getAddress(userAddress));
-    console.log('[FHE] Created encrypted input');
-
     input.add64(skill);
-    console.log('[FHE] Added u64 value:', skill);
 
-    // encrypt() returns { handles: Uint8Array[], inputProof: Uint8Array }
     const { handles, inputProof } = await input.encrypt();
 
-    console.log('[FHE] Encryption complete');
-    console.log('[FHE] Handle:', handles[0]);
-    console.log('[FHE] Proof:', inputProof);
-
-    // Convert Uint8Array to hex string using ethers hexlify
     const handleHex = hexlify(handles[0]) as `0x${string}`;
     const proofHex = hexlify(inputProof) as `0x${string}`;
-
-    console.log('[FHE] Handle (hex):', handleHex);
-    console.log('[FHE] Proof (hex):', proofHex);
 
     return {
       handle: handleHex,
@@ -92,8 +111,7 @@ export const encryptSkill = async (
     };
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
-    console.error('[FHE] ❌ Encryption failed:', errorMsg);
-    console.error('[FHE] Error stack:', error);
+    console.error("[FHE] ❌ Encryption failed:", errorMsg);
     throw new Error(`FHE encryption failed: ${errorMsg}`);
   }
 };
