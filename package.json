@@ -4,11 +4,15 @@
   "description": "Privacy-preserving PvP betting platform with Fully Homomorphic Encryption",
   "scripts": {
     "compile": "npx hardhat compile",
-    "deploy:sepolia": "SEPOLIA_RPC_URL=\"https://ethereum-sepolia-rpc.publicnode.com\" npx hardhat run scripts/deploy.cjs --network sepolia",
-    "create-duels": "npx hardhat run scripts/create-duels.cjs --network sepolia",
+    "test": "npx hardhat test",
+    "test:gas": "REPORT_GAS=true npx hardhat test",
+    "deploy:sepolia": "SEPOLIA_RPC_URL=\"https://ethereum-sepolia-rpc.publicnode.com\" npx hardhat run scripts/deploy.js --network sepolia",
+    "create-duels": "SEPOLIA_RPC_URL=\"https://ethereum-sepolia-rpc.publicnode.com\" npx hardhat run scripts/create-native.js --network sepolia",
     "verify": "npx hardhat verify --network sepolia",
     "dev": "cd frontend && npm run dev",
-    "build": "cd frontend && npm run build"
+    "build": "npm run compile && cd frontend && npm run build",
+    "type-check": "cd frontend && npm run type-check",
+    "lint": "cd frontend && npm run lint"
   },
   "dependencies": {
     "dotenv": "^16.4.0",
