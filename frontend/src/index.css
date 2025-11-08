@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 230 42% 8%;
+  --foreground: 210 25% 96%;
+  --card: 230 45% 12%;
+  --card-foreground: 210 25% 96%;
+  --primary: 268 82% 55%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 186 100% 60%;
+  --secondary-foreground: 230 42% 8%;
+  --muted: 228 36% 22%;
+  --muted-foreground: 210 20% 70%;
+  --accent: 0 84% 55%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 75% 58%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 228 36% 32%;
+  --input: 228 36% 32%;
+  --ring: 268 82% 55%;
+}
+
+body {
+  background:
+    radial-gradient(circle at 14% 18%, rgba(112, 39, 224, 0.35), transparent 50%),
+    radial-gradient(circle at 82% 10%, rgba(43, 244, 255, 0.25), transparent 55%),
+    linear-gradient(145deg, #05060c 0%, #0b0f1f 55%, #05060d 100%);
+  color: hsl(var(--foreground));
+}
+
+.arena-grid {
+  position: relative;
+}
+
+.arena-grid::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(112, 39, 224, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(43, 244, 255, 0.12) 1px, transparent 1px);
+  background-size: 48px 48px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+
+
