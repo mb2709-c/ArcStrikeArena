@@ -1,24 +1,134 @@
 # Arc Strike Arena
 
-Arc Strike Arena 是一个隐私友好的 PvP 竞猜平台。观众针对两位选手的对决下注，并为所支持的一方提交密文“技能权重”。链上仅保存加密后的累计权重；直到比赛结束并发起 FHE 解密后，才会公开双方的总权重值，以公平决定胜者。
+Arc Strike Arena is a privacy-preserving PvP betting platform. Supporters bet on fighters in duels and submit encrypted "skill weights" for their chosen side. Only encrypted cumulative weights are stored on-chain. After the duel ends and FHE decryption is initiated, both sides' total weights are revealed to fairly determine the winner.
 
-## 核心流程
+## Core Workflow
 
-1. **创建对决**：组织者设置 `stakeAmount`、持续时间与选手名称，初始化 `weightA/B` 密文累加器。
-2. **下注**：用户支付 `stakeAmount` 并通过 FHE SDK 上传 `externalEuint64` 技能权重。合约将密文累加到对应选手，同时记录下注方。
-3. **揭晓**：到期后创建者调用 `requestReplicaReveal`，FHE 网关返回双方总权重明文，胜者即为权重更高的一方（相等视为平局）。
-4. **领奖/退款**：胜方 supporter 均分奖池；若对决取消或平局，则所有人可领取退款。
+1. **Create Duel**: Organizer sets `stakeAmount`, duration, and fighter names, initializing `weightA/B` encrypted accumulators.
+2. **Place Bet**: Users pay `stakeAmount` and upload encrypted `euint64` skill weight via FHE SDK. The contract adds the ciphertext to the corresponding fighter while recording the bettor.
+3. **Reveal**: After deadline, creator calls `requestReplicaReveal`. The FHE gateway returns plaintext total weights for both sides. Winner is the side with higher weight (tie if equal).
+4. **Claim Prize/Refund**: Winning supporters share the prize pool equally. If duel is cancelled or tied, all participants can claim refunds.
 
-## 重要合约接口
+## Key Contract Interfaces
 
 - `createReplicaDuel(duelId, fighterA, fighterB, stake, duration)`
 - `placeReplicaBet(duelId, side, encryptedSkill, proof)`
 - `requestReplicaReveal(duelId)` / `finalizeReplicaReveal(requestId, cleartexts, proof)`
 - `claimReplicaPrize(duelId)` / `claimReplicaRefund(duelId)`
-- `getReplicaBetCipher(duelId, user)` 方便前端展示个人密文句柄
+- `getReplicaBetCipher(duelId, user)` - Convenient for frontend to display user's ciphertext handle
 
-## 部署与集成
+## Deployment & Integration
 
-- 复用仓库既有 Hardhat 配置和 `@fhevm/solidity` 依赖。
-- 前端需使用 FHE SDK 生成密文技能值，并在下注时附带 `bytes proof`。
-- `stakeAmount` 固定保证了 payout 可被均分；若需按照权重比例分配，可拓展为解密个人权重或引入额外证明。
+- Reuses existing Hardhat configuration and `@fhevm/solidity` dependencies in the repository.
+- Frontend must use FHE SDK to generate encrypted skill values and attach `bytes proof` when betting.
+- Fixed `stakeAmount` ensures equal payout distribution. For proportional distribution based on weights, extend to decrypt individual weights or introduce additional proofs.
+
+## Tech Stack
+
+**Smart Contracts:**
+- Solidity with Zama fhEVM 0.5.0
+- Fully Homomorphic Encryption for private skill weights
+- Deployed on Sepolia testnet
+
+**Frontend:**
+- React 18 + TypeScript
+- Vite for build tooling
+- Wagmi + RainbowKit for wallet connectivity
+- Zama FHE SDK 0.3.0-5 for encryption
+- Tailwind CSS + shadcn/ui for styling
+- Linear-inspired minimalist design
+
+## Project Structure
+
+```
+ArcStrikeArena/
+├── contracts/              # Solidity smart contracts
+│   └── ArcStrikeArena.sol # Main duel contract with FHE
+├── scripts/                # Deployment and testing scripts
+│   ├── deploy.js          # Contract deployment
+│   └── create-native.js   # Create test duels
+├── frontend/              # React frontend application
+│   ├── src/
+│   │   ├── components/   # UI components
+│   │   ├── hooks/        # Contract interaction hooks
+│   │   ├── lib/          # FHE SDK integration
+│   │   ├── store/        # State management
+│   │   └── views/        # Page views
+│   └── public/
+└── test/                  # Contract tests
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+- MetaMask or compatible Web3 wallet
+
+### Installation
+
+```bash
+# Install dependencies
+npm install
+
+# Install frontend dependencies
+cd frontend && npm install
+```
+
+### Deploy Contract
+
+```bash
+# Compile contracts
+npx hardhat compile
+
+# Deploy to Sepolia
+SEPOLIA_RPC_URL="https://ethereum-sepolia-rpc.publicnode.com" npx hardhat run scripts/deploy.js --network sepolia
+
+# Create test duels
+SEPOLIA_RPC_URL="https://ethereum-sepolia-rpc.publicnode.com" npx hardhat run scripts/create-native.js --network sepolia
+```
+
+### Run Frontend
+
+```bash
+cd frontend
+npm run dev
+```
+
+Open http://localhost:5189 in your browser.
+
+## Testing
+
+```bash
+# Run contract tests
+npm test
+
+# Run frontend type check
+cd frontend && npm run type-check
+
+# Build for production
+cd frontend && npm run build
+```
+
+## Features
+
+✅ **Privacy-Preserving Betting** - Encrypted skill weights using Zama FHE
+✅ **Fair Reveal** - On-chain decryption via FHE gateway
+✅ **Equal Prize Distribution** - Winning supporters share prize pool
+✅ **Refund Mechanism** - Cancelled or tied duels allow refunds
+✅ **Real-time Updates** - Contract event monitoring
+✅ **Wallet Integration** - MetaMask, WalletConnect, Coinbase Wallet support
+
+## Contract Address
+
+**Sepolia Testnet:**
+- ArcStrikeArena: `0x0c6bf68f0CC59F0FBb93b7F51fA8caC756e04ABD`
+
+## License
+
+MIT License - see LICENSE file for details
+
+## Acknowledgments
+
+Built with [Zama fhEVM](https://docs.zama.ai/fhevm) - Fully Homomorphic Encryption on Ethereum
