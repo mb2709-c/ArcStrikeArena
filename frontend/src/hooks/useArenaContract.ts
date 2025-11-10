@@ -101,6 +101,31 @@ export function useBetCipher(duelId: string | undefined, userAddress: string | u
   };
 }
 
+/**
+ * Get user's bet information (exists, side, claimed)
+ */
+export function useUserBetInfo(duelId: string | undefined, userAddress: string | undefined) {
+  const { data, isLoading, error, refetch } = useReadContract({
+    address: ARC_STRIKE_ARENA_ADDRESS,
+    abi: ARC_STRIKE_ARENA_ABI,
+    functionName: "getUserBetInfo",
+    args: duelId && userAddress ? [duelId, userAddress as `0x${string}`] : undefined,
+    query: {
+      enabled: !!duelId && !!userAddress
+    }
+  });
+
+  return {
+    betInfo: data as [boolean, number, boolean] | undefined,
+    exists: data?.[0] ?? false,
+    side: data?.[1] ?? 0,
+    claimed: data?.[2] ?? false,
+    isLoading,
+    error,
+    refetch
+  };
+}
+
 // ==================== WRITE HOOKS ====================
 
 /**
