@@ -26,6 +26,7 @@ import {
   useIsContractDeployed,
   useDuel,
   useBetCipher,
+  useUserBetInfo,
   useListDuels,
   useWatchDuelCreated,
   useWatchBetPlaced,
@@ -92,14 +93,17 @@ export function useArenaHall() {
 // ==================== DUEL DETAIL ====================
 
 export function useDuelDetail(duelId?: string) {
+  const { address } = useAccount();
   const { duel, isLoading, refetch } = useDuel(duelId);
+  const { exists, side, claimed } = useUserBetInfo(duelId, address);
 
   if (!duelId || !duel) {
     return {
       data: undefined,
       isLoading,
       error: null,
-      refetch
+      refetch,
+      userBet: null
     };
   }
 
@@ -160,11 +164,26 @@ export function useDuelDetail(duelId?: string) {
     timeline
   };
 
+  // Build user bet information
+  const userBet = exists ? {
+    side: side as 1 | 2,
+    fighterId: side === 1 ? "fighter-a" : "fighter-b",
+    fighterName: side === 1 ? duel.fighterA : duel.fighterB,
+    claimed,
+    isWinner: duel.settled && Number(duel.winningSide) === side,
+    canClaim: duel.settled && !claimed && (
+      Number(duel.winningSide) === side || // Won
+      Number(duel.winningSide) === 0 || // Draw
+      duel.cancelled // Cancelled
+    )
+  } : null;
+
   return {
     data: detail,
     isLoading,
     error: null,
-    refetch
+    refetch,
+    userBet
   };
 }
 
@@ -269,18 +288,18 @@ export function useArenaActions(duelId: string) {
         }
 
         if (Date.now() - data.encryptedAt > ENCRYPTION_TTL_MS) {
-          toast.error("加密凭证已过期，请重新加密后再提交。");
+          toast.error("Encryption expired. Please re-encrypt and submit again.");
           return;
         }
 
         if (!HANDLE_REGEX.test(data.handle)) {
-          toast.error("FHE 句柄无效，请重新生成密文。");
+          toast.error("Invalid FHE handle. Please regenerate the ciphertext.");
           return;
         }
 
         const proofLooksValid = HEX_REGEX.test(data.proof) && (data.proof.length - 2) % 2 === 0;
         if (!proofLooksValid) {
-          toast.error("密文证明格式错误，请重新加密。");
+          toast.error("Invalid proof format. Please re-encrypt.");
           return;
         }
 
