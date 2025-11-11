@@ -9,8 +9,9 @@ import { FighterToggle } from "@/components/fighter-toggle";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useArenaActions } from "@/hooks/useArenaData";
-import { encryptSkill, initializeFHE } from "@/lib/fhe";
+import { encryptSkill, initializeFHE, getFHEInstance } from "@/lib/fhe";
 import { ARC_STRIKE_ARENA_ADDRESS } from "@/constants/contracts";
+import { useFheStore } from "@/store/useFheStore";
 import type { DuelDetail } from "@/types";
 
 const betSchema = z.object({
@@ -29,7 +30,7 @@ export function BetSheet({ detail, activeFighterId, onSelectFighter }: BetSheetP
   const { placeBet } = useArenaActions(detail.duelId);
   const { address } = useAccount();
   const [isEncrypting, setIsEncrypting] = useState(false);
-  const [fheReady, setFheReady] = useState(false);
+  const { ready: fheReady, initializing: fheInitializing } = useFheStore();
 
   const form = useForm<BetSheetValues>({
     resolver: zodResolver(betSchema),
@@ -38,32 +39,21 @@ export function BetSheet({ detail, activeFighterId, onSelectFighter }: BetSheetP
     }
   });
 
-  // Initialize FHE SDK when component mounts
+  // Initialize FHE SDK only when wallet is connected
   useEffect(() => {
-    let mounted = true;
+    if (!address) {
+      return;
+    }
 
-    const init = async () => {
-      try {
-        console.log('[BetSheet] Initializing FHE SDK...');
-        await initializeFHE();
-        if (mounted) {
-          console.log('[BetSheet] FHE SDK ready');
-          setFheReady(true);
-        }
-      } catch (error) {
-        console.error('[BetSheet] FHE initialization failed:', error);
-        if (mounted) {
-          setFheReady(false);
-        }
-      }
-    };
+    if (fheReady || fheInitializing || getFHEInstance()) {
+      return;
+    }
 
-    init();
-
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    console.log("[BetSheet] Initializing FHE SDK with wallet:", address);
+    initializeFHE().catch((error) => {
+      console.error("[BetSheet] FHE initialization failed:", error);
+    });
+  }, [address, fheReady, fheInitializing]);
 
   const handleSubmit = async (values: BetSheetValues) => {
     if (!address) {
@@ -158,7 +148,7 @@ export function BetSheet({ detail, activeFighterId, onSelectFighter }: BetSheetP
           {!fheReady ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Initializing FHE...
+              {fheInitializing ? "Initializing FHE..." : "Ready check..."}
             </>
           ) : isEncrypting ? (
             <>
@@ -181,5 +171,4 @@ export function BetSheet({ detail, activeFighterId, onSelectFighter }: BetSheetP
     </div>
   );
 }
-
 
