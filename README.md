@@ -47,6 +47,10 @@ ArcStrikeArena/
 ├── scripts/                # Deployment and testing scripts
 │   ├── deploy.js          # Contract deployment
 │   └── create-native.js   # Create test duels
+├── tests/                  # Comprehensive test suite
+│   ├── ArcStrikeArena.test.js          # Smart contract tests
+│   ├── frontend-integration.test.js    # Frontend integration tests
+│   └── README.md                        # Testing documentation
 ├── frontend/              # React frontend application
 │   ├── src/
 │   │   ├── components/   # UI components
@@ -55,7 +59,6 @@ ArcStrikeArena/
 │   │   ├── store/        # State management
 │   │   └── views/        # Page views
 │   └── public/
-└── test/                  # Contract tests
 ```
 
 ## Getting Started
@@ -100,16 +103,55 @@ Open http://localhost:5189 in your browser.
 
 ## Testing
 
+We have a comprehensive test suite covering smart contracts and frontend integration.
+
+### Smart Contract Tests
+
 ```bash
-# Run contract tests
+# Run all contract tests
 npm test
 
+# Run specific test file
+npx hardhat test tests/ArcStrikeArena.test.js
+
+# Run with gas reporting
+REPORT_GAS=true npm test
+```
+
+**Test Coverage:**
+- ✅ Duel creation and management
+- ✅ Encrypted betting with FHE proof verification
+- ✅ User bet tracking (getUserBetInfo)
+- ✅ Duel settlement with FHE decryption
+- ✅ Prize and refund claiming
+- ✅ Error handling (double betting, invalid stakes, expired duels)
+- ✅ Complex scenarios (multiple concurrent duels)
+- ✅ All FHE operations (fromExternal, add, gt, select, requestDecryption)
+
+### Frontend Integration Tests
+
+```bash
 # Run frontend type check
 cd frontend && npm run type-check
+
+# Run linting
+cd frontend && npm run lint
 
 # Build for production
 cd frontend && npm run build
 ```
+
+**Integration Test Scenarios:**
+- ✅ FHE SDK loading and initialization
+- ✅ Wallet connection with RainbowKit
+- ✅ Duel list display and filtering
+- ✅ Encrypted bet placement flow
+- ✅ Transaction status tracking
+- ✅ Real-time updates and event listeners
+- ✅ Responsive design (mobile/tablet/desktop)
+- ✅ Error handling and recovery
+
+📖 **Detailed testing documentation:** See [tests/README.md](tests/README.md)
 
 ## Features
 
