@@ -10,7 +10,9 @@
 [![React](https://img.shields.io/badge/React-18.3.1-61dafb.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4.5-blue.svg)](https://www.typescriptlang.org/)
 
-[Demo](#demo) • [Features](#features) • [Architecture](#architecture) • [Getting Started](#getting-started) • [Documentation](#documentation)
+🌐 **Live Demo**: [https://arcstrikearena.vercel.app](https://arcstrikearena.vercel.app)
+
+[Features](#features) • [Architecture](#architecture) • [Getting Started](#getting-started) • [Documentation](#documentation)
 
 </div>
 
