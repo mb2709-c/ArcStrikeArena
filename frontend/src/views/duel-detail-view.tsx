@@ -1,9 +1,8 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { AlertTriangle, Loader2, ShieldCheck, Trophy, Undo2 } from "lucide-react";
 
 import { BetSheet } from "@/components/bet-sheet";
 import { DuelTimeline } from "@/components/duel-timeline";
-import { MyCipherDialog } from "@/components/my-cipher-dialog";
 import { StatusBanner } from "@/components/status-banner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,23 +11,17 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import {
   useArenaActions,
   useArenaRole,
-  useBetPositions,
   useDuelDetail
 } from "@/hooks/useArenaData";
 
 export function DuelDetailView({ duelId }: { duelId: string }) {
   const detailQuery = useDuelDetail(duelId);
   const detail = detailQuery.data;
+  const userBet = detailQuery.userBet;
   const { role } = useArenaRole();
   const [activeFighterId, setActiveFighterId] = useState<string>(detail?.fighters[0].id ?? "");
 
   const { settleDuel, cancelDuel, claimPrize, claimRefund } = useArenaActions(duelId);
-  const positionsQuery = useBetPositions();
-
-  const myPosition = useMemo(
-    () => positionsQuery.data?.find((position) => position.duelId === duelId),
-    [positionsQuery.data, duelId]
-  );
 
   if (detailQuery.isLoading || !detail) {
     return (
@@ -101,15 +94,26 @@ export function DuelDetailView({ duelId }: { duelId: string }) {
               </CardHeader>
               <CardContent className="space-y-3 text-sm text-sky-100/90">
                 <p className="text-xs uppercase tracking-[0.32em] text-sky-200/70">Your position</p>
-                {myPosition ? (
+                {userBet ? (
                   <div className="flex flex-col gap-2 rounded-[1.5rem] border border-[#7027E0]/30 bg-slate-950/70 p-4">
                     <p className="text-xs uppercase tracking-[0.32em]">
-                      Fighter <span className="text-[#2BF4FF]">{myPosition.supportedFighter}</span>
+                      Fighter <span className="text-[#2BF4FF]">{userBet.fighterName}</span>
                     </p>
                     <p className="text-xs uppercase tracking-[0.32em]">
-                      Weight <span className="text-[#2BF4FF]">{myPosition.weight}</span>
+                      Side <span className="text-[#2BF4FF]">{userBet.side === 1 ? 'A' : 'B'}</span>
                     </p>
-                    <MyCipherDialog position={myPosition} />
+                    {detail.settled && (
+                      <p className="text-xs uppercase tracking-[0.32em]">
+                        Status <span className={userBet.isWinner ? "text-green-400" : "text-red-400"}>
+                          {userBet.isWinner ? 'WON' : 'LOST'}
+                        </span>
+                      </p>
+                    )}
+                    {userBet.claimed && (
+                      <p className="text-xs uppercase tracking-[0.32em]">
+                        <span className="text-yellow-400">CLAIMED</span>
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <p className="text-xs text-sky-200/70">No wager recorded for this duel.</p>
@@ -119,7 +123,7 @@ export function DuelDetailView({ duelId }: { duelId: string }) {
                     variant="default"
                     size="sm"
                     className="gap-2"
-                    disabled={!myPosition || myPosition.claimed}
+                    disabled={!userBet || !userBet.canClaim || userBet.claimed || !userBet.isWinner}
                     onClick={() => claimPrize.mutate()}
                   >
                     <Trophy className="h-4 w-4" />
@@ -129,7 +133,7 @@ export function DuelDetailView({ duelId }: { duelId: string }) {
                     variant="outline"
                     size="sm"
                     className="gap-2"
-                    disabled={!myPosition || !myPosition.refundable}
+                    disabled={!userBet || !userBet.canClaim || userBet.claimed || userBet.isWinner}
                     onClick={() => claimRefund.mutate()}
                   >
                     <Undo2 className="h-4 w-4" />
