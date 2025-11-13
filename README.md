@@ -21,6 +21,7 @@
 ## 📖 Table of Contents
 
 - [Overview](#overview)
+- [Demo Video](#demo-video)
 - [Key Features](#key-features)
 - [How It Works](#how-it-works)
 - [Betting Mechanism](#betting-mechanism)
@@ -52,6 +53,20 @@ Arc Strike Arena solves these problems by:
 - ✅ **Preventing strategy leakage** until duel completion
 - ✅ **Ensuring fair settlement** through cryptographic proofs
 - ✅ **Supporting multiple concurrent duels** with isolated state
+
+---
+
+## 🎬 Demo Video
+
+Watch the platform in action! Download and view our demonstration video to see:
+- Complete betting workflow from wallet connection to prize claiming
+- FHE encryption in action
+- Real-time duel updates and settlement
+- User interface and experience
+
+📥 **Download Demo Video**: [demo/vedio.mp4](demo/vedio.mp4) (1.6 MB)
+
+> **Note**: Click the link above to download the video file, then open it with your video player.
 
 ---
 
